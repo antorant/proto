@@ -1,30 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Iso Shape Prototype</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "three": "https://esm.sh/three@0.160.0"
-  }
-}
-</script>
-<style>
-  html, body, #root { height: 100%; margin: 0; }
-</style>
-</head>
-<body>
-<div id="root"></div>
-<script type="text/babel" data-type="module" data-presets="react">
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { createRoot } from 'react-dom/client';
-
 
 /*
   ISO SHAPE PROTOTYPE
@@ -60,23 +36,49 @@ import { createRoot } from 'react-dom/client';
 const AMBIENT = 0.45;
 const DIFFUSE = 0.55;
 const ISO_DEG = 30;
-
 const LIGHT_PRESETS = {
-  bottomRight: { label: 'Bottom Right', dir: [0.5, -0.7, 0.5] },
-  topLeft: { label: 'Top Left', dir: [-0.3, 0.8, 0.4] },
+  bottomRight: {
+    label: 'Bottom Right',
+    dir: [0.5, -0.7, 0.5]
+  },
+  topLeft: {
+    label: 'Top Left',
+    dir: [-0.3, 0.8, 0.4]
+  }
 };
-
-const GRADIENTS = [
-  { label: 'Cyan / Mint', from: '#98edd9', to: '#98dcef' },
-  { label: 'Lime', from: '#e1ee97', to: '#c9ed97' },
-  { label: 'Purple / Magenta', from: '#c598ed', to: '#e297f1' },
-  { label: 'Peach / Coral', from: '#eec297', to: '#eea796' },
-  { label: 'Mauve / Lavender', from: '#cca7d2', to: '#bea6d1' },
-  { label: 'Teal / Blue-grey', from: '#a6d0cc', to: '#a6c6ce' },
-  { label: 'Olive', from: '#c6cca4', to: '#bacca3' },
-  { label: 'Tan / Rose', from: '#cab7a7', to: '#c9aca4' },
-];
-
+const GRADIENTS = [{
+  label: 'Cyan / Mint',
+  from: '#98edd9',
+  to: '#98dcef'
+}, {
+  label: 'Lime',
+  from: '#e1ee97',
+  to: '#c9ed97'
+}, {
+  label: 'Purple / Magenta',
+  from: '#c598ed',
+  to: '#e297f1'
+}, {
+  label: 'Peach / Coral',
+  from: '#eec297',
+  to: '#eea796'
+}, {
+  label: 'Mauve / Lavender',
+  from: '#cca7d2',
+  to: '#bea6d1'
+}, {
+  label: 'Teal / Blue-grey',
+  from: '#a6d0cc',
+  to: '#a6c6ce'
+}, {
+  label: 'Olive',
+  from: '#c6cca4',
+  to: '#bacca3'
+}, {
+  label: 'Tan / Rose',
+  from: '#cab7a7',
+  to: '#c9aca4'
+}];
 const lerp = (a, b, t) => a + (b - a) * t;
 
 // Target render surface: fixed 68x54px, not responsive.
@@ -93,7 +95,6 @@ const PIXEL_SCALE = 4;
 // large shapes appear within the 68x54 canvas - tune so the shape at
 // its largest (e.g. ADS 03 Sustain at value=127) nearly fills the canvas.
 const FRUSTUM_D = 1.4;
-
 const sharedFragmentShader = `
   uniform vec3 uLightDir;
   varying vec3 vNormal;
@@ -109,7 +110,12 @@ const sharedFragmentShader = `
 const SHAPES = {
   adsSustain: {
     label: 'ADS 03 Sustain',
-    params: { length: 2.0, depth: 1.0, heightMin: 0.07, heightMax: 1.0 },
+    params: {
+      length: 2.0,
+      depth: 1.0,
+      heightMin: 0.07,
+      heightMax: 1.0
+    },
     geometry: () => new THREE.BoxGeometry(1, 1, 1),
     vertexShader: `
       uniform float uLen;
@@ -131,53 +137,85 @@ const SHAPES = {
         gl_Position.xy += uNdcOffset * gl_Position.w;
       }
     `,
-    getUniforms: (value) => {
-      const { length, depth, heightMin, heightMax } = SHAPES.adsSustain.params;
+    getUniforms: value => {
+      const {
+        length,
+        depth,
+        heightMin,
+        heightMax
+      } = SHAPES.adsSustain.params;
       return {
-        uLen: { value: length },
-        uHeight: { value: lerp(heightMin, heightMax, value / 127) },
-        uDepth: { value: depth },
+        uLen: {
+          value: length
+        },
+        uHeight: {
+          value: lerp(heightMin, heightMax, value / 127)
+        },
+        uDepth: {
+          value: depth
+        }
       };
     },
-    getPoints: (value) => {
-      const { length: L, depth: D, heightMin, heightMax } = SHAPES.adsSustain.params;
+    getPoints: value => {
+      const {
+        length: L,
+        depth: D,
+        heightMin,
+        heightMax
+      } = SHAPES.adsSustain.params;
       const H = lerp(heightMin, heightMax, value / 127);
       return {
-        tlf: [-L / 2, H, D / 2], tlb: [-L / 2, H, -D / 2],
-        trf: [L / 2, H, D / 2], trb: [L / 2, H, -D / 2],
-        blf: [-L / 2, 0, D / 2], blb: [-L / 2, 0, -D / 2],
-        brf: [L / 2, 0, D / 2], brb: [L / 2, 0, -D / 2],
+        tlf: [-L / 2, H, D / 2],
+        tlb: [-L / 2, H, -D / 2],
+        trf: [L / 2, H, D / 2],
+        trb: [L / 2, H, -D / 2],
+        blf: [-L / 2, 0, D / 2],
+        blb: [-L / 2, 0, -D / 2],
+        brf: [L / 2, 0, D / 2],
+        brb: [L / 2, 0, -D / 2]
       };
     },
-    getFaces: (_value) => [
-      { labels: ['tlf', 'tlb', 'trb', 'trf'], normal: [0, 1, 0] }, // top
-      { labels: ['trf', 'trb', 'brb', 'brf'], normal: [1, 0, 0] }, // right
-      { labels: ['tlf', 'trf', 'brf', 'blf'], normal: [0, 0, 1] }, // front
-    ],
+    getFaces: _value => [{
+      labels: ['tlf', 'tlb', 'trb', 'trf'],
+      normal: [0, 1, 0]
+    },
+    // top
+    {
+      labels: ['trf', 'trb', 'brb', 'brf'],
+      normal: [1, 0, 0]
+    },
+    // right
+    {
+      labels: ['tlf', 'trf', 'brf', 'blf'],
+      normal: [0, 0, 1]
+    } // front
+    ]
   },
-
   adsDecay: {
     label: 'ADS 02 Decay',
     // Right-triangle prism. "length" (L) and "height" (H) are the two
     // legs of the triangle; the hypotenuse just connects their
     // endpoints. value=0 -> tall & narrow (L small, H large);
     // value=127 -> flat & wide (L large, H small). Depth (D) fixed.
-    params: { lengthMin: 0.2, lengthMax: 2.0, heightMin: 0.2, heightMax: 2.0, depth: 0.9 },
+    params: {
+      lengthMin: 0.2,
+      lengthMax: 2.0,
+      heightMin: 0.2,
+      heightMax: 2.0,
+      depth: 0.9
+    },
     // Unit-space prism: only the 2 faces visible from this iso angle.
     //   A=(0,0,1) B=(1,0,1) C=(0,1,1)  -- front end-cap triangle (normal +Z)
     //   B C C' B'                      -- hypotenuse rectangle (normal ~(1,1,0))
     geometry: () => {
       const N2 = Math.SQRT1_2;
-      const positions = new Float32Array([
-        0, 0, 1,  1, 0, 1,  0, 1, 1,      // end-cap triangle
-        1, 0, 1,  0, 1, 0,  0, 1, 1,      // hyp rect, tri 1 (B, C', C)
-        1, 0, 1,  1, 0, 0,  0, 1, 0,      // hyp rect, tri 2 (B, B', C')
+      const positions = new Float32Array([0, 0, 1, 1, 0, 1, 0, 1, 1,
+      // end-cap triangle
+      1, 0, 1, 0, 1, 0, 0, 1, 1,
+      // hyp rect, tri 1 (B, C', C)
+      1, 0, 1, 1, 0, 0, 0, 1, 0 // hyp rect, tri 2 (B, B', C')
       ]);
-      const normals = new Float32Array([
-        0, 0, 1,  0, 0, 1,  0, 0, 1,
-        N2, N2, 0,  N2, N2, 0,  N2, N2, 0,
-        N2, N2, 0,  N2, N2, 0,  N2, N2, 0,
-      ]);
+      const normals = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, N2, N2, 0, N2, N2, 0, N2, N2, 0, N2, N2, 0, N2, N2, 0, N2, N2, 0]);
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       geom.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
@@ -199,36 +237,68 @@ const SHAPES = {
         gl_Position.xy += uNdcOffset * gl_Position.w;
       }
     `,
-    getUniforms: (value) => {
-      const { lengthMin, lengthMax, heightMin, heightMax, depth } = SHAPES.adsDecay.params;
+    getUniforms: value => {
+      const {
+        lengthMin,
+        lengthMax,
+        heightMin,
+        heightMax,
+        depth
+      } = SHAPES.adsDecay.params;
       const t = value / 127;
       return {
-        uLen: { value: lerp(lengthMin, lengthMax, t) },
-        uHeight: { value: lerp(heightMax, heightMin, t) },
-        uDepth: { value: depth },
+        uLen: {
+          value: lerp(lengthMin, lengthMax, t)
+        },
+        uHeight: {
+          value: lerp(heightMax, heightMin, t)
+        },
+        uDepth: {
+          value: depth
+        }
       };
     },
-    getPoints: (value) => {
-      const { lengthMin, lengthMax, heightMin, heightMax, depth: D } = SHAPES.adsDecay.params;
+    getPoints: value => {
+      const {
+        lengthMin,
+        lengthMax,
+        heightMin,
+        heightMax,
+        depth: D
+      } = SHAPES.adsDecay.params;
       const t = value / 127;
       const L = lerp(lengthMin, lengthMax, t);
       const H = lerp(heightMax, heightMin, t);
       return {
-        A: [0, 0, D], B: [L, 0, D], C: [0, H, D],
-        Bp: [L, 0, 0], Cp: [0, H, 0],
+        A: [0, 0, D],
+        B: [L, 0, D],
+        C: [0, H, D],
+        Bp: [L, 0, 0],
+        Cp: [0, H, 0]
       };
     },
-    getFaces: (value) => {
-      const { lengthMin, lengthMax, heightMin, heightMax } = SHAPES.adsDecay.params;
+    getFaces: value => {
+      const {
+        lengthMin,
+        lengthMax,
+        heightMin,
+        heightMax
+      } = SHAPES.adsDecay.params;
       const t = value / 127;
       const L = lerp(lengthMin, lengthMax, t);
       const H = lerp(heightMax, heightMin, t);
-      return [
-        { labels: ['A', 'B', 'C'], normal: [0, 0, 1] },          // end cap
-        { labels: ['B', 'C', 'Cp', 'Bp'], normal: [H, L, 0] },   // hypotenuse face
+      return [{
+        labels: ['A', 'B', 'C'],
+        normal: [0, 0, 1]
+      },
+      // end cap
+      {
+        labels: ['B', 'C', 'Cp', 'Bp'],
+        normal: [H, L, 0]
+      } // hypotenuse face
       ];
-    },
-  },
+    }
+  }
 };
 
 // ---- Alignment ----
@@ -238,21 +308,33 @@ const SHAPES = {
 // centre-x and bottom-y match it - keeping every shape on a common
 // horizontal centreline and baseline within the canvas.
 function getNdcBbox(points, cam) {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
   points.forEach(([x, y, z]) => {
     const v = new THREE.Vector3(x, y, z).project(cam);
-    minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
-    minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+    minX = Math.min(minX, v.x);
+    maxX = Math.max(maxX, v.x);
+    minY = Math.min(minY, v.y);
+    maxY = Math.max(maxY, v.y);
   });
-  return { minX, maxX, minY, maxY, centerX: (minX + maxX) / 2 };
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    centerX: (minX + maxX) / 2
+  };
 }
-
 function getNdcOffset(shape, value, cam) {
   const ref = getNdcBbox(Object.values(SHAPES.adsSustain.getPoints(0)), cam);
   const cur = getNdcBbox(Object.values(shape.getPoints(value)), cam);
-  return { x: ref.centerX - cur.centerX, y: ref.minY - cur.minY };
+  return {
+    x: ref.centerX - cur.centerX,
+    y: ref.minY - cur.minY
+  };
 }
-
 export default function IsoShapePrototype() {
   const mountRef = useRef(null);
   const sceneRef = useRef(null);
@@ -260,24 +342,29 @@ export default function IsoShapePrototype() {
   const meshRef = useRef(null);
   const materialRef = useRef(null);
   const geometryRef = useRef(null);
-
   const [value, setValue] = useState(48);
   const [lightKey, setLightKey] = useState('bottomRight');
   const [gradientIndex, setGradientIndex] = useState(2);
   const [shapeKey, setShapeKey] = useState('adsSustain');
-  const [overlayRect, setOverlayRect] = useState({ left: 0, top: 0, width: 0, height: 0 });
-
+  const [overlayRect, setOverlayRect] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0
+  });
   const shape = SHAPES[shapeKey];
-
   const updateOverlay = (currentShape, currentValue) => {
     const cam = cameraRef.current;
     const mount = mountRef.current;
     if (!cam || !mount) return;
-    const w = mount.clientWidth, h = mount.clientHeight;
+    const w = mount.clientWidth,
+      h = mount.clientHeight;
     const points = Object.values(currentShape.getPoints(currentValue));
     const offset = getNdcOffset(currentShape, currentValue, cam);
-
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity;
     points.forEach(([x, y, z]) => {
       const v = new THREE.Vector3(x, y, z);
       v.project(cam);
@@ -285,30 +372,28 @@ export default function IsoShapePrototype() {
       const ndcY = v.y + offset.y;
       const px = (ndcX * 0.5 + 0.5) * w;
       const py = (1 - (ndcY * 0.5 + 0.5)) * h;
-      minX = Math.min(minX, px); maxX = Math.max(maxX, px);
-      minY = Math.min(minY, py); maxY = Math.max(maxY, py);
+      minX = Math.min(minX, px);
+      maxX = Math.max(maxX, px);
+      minY = Math.min(minY, py);
+      maxY = Math.max(maxY, py);
     });
-
     const pad = 2; // px - covers anti-aliased edge pixels not fully tinted
     setOverlayRect({
       left: minX - pad,
       top: minY - pad,
-      width: (maxX - minX) + pad * 2,
-      height: (maxY - minY) + pad * 2,
+      width: maxX - minX + pad * 2,
+      height: maxY - minY + pad * 2
     });
   };
-
   const rebuildMesh = (currentShape, currentValue, currentLightKey) => {
     const scene = sceneRef.current;
     const cam = cameraRef.current;
     if (!scene || !cam) return;
-
     if (meshRef.current) {
       scene.remove(meshRef.current);
       geometryRef.current?.dispose();
       materialRef.current?.dispose();
     }
-
     const offset = getNdcOffset(currentShape, currentValue, cam);
     const geometry = currentShape.geometry();
     const material = new THREE.ShaderMaterial({
@@ -316,13 +401,16 @@ export default function IsoShapePrototype() {
       fragmentShader: sharedFragmentShader,
       uniforms: {
         ...currentShape.getUniforms(currentValue),
-        uNdcOffset: { value: new THREE.Vector2(offset.x, offset.y) },
-        uLightDir: { value: new THREE.Vector3(...LIGHT_PRESETS[currentLightKey].dir) },
-      },
+        uNdcOffset: {
+          value: new THREE.Vector2(offset.x, offset.y)
+        },
+        uLightDir: {
+          value: new THREE.Vector3(...LIGHT_PRESETS[currentLightKey].dir)
+        }
+      }
     });
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
-
     geometryRef.current = geometry;
     materialRef.current = material;
     meshRef.current = mesh;
@@ -331,34 +419,27 @@ export default function IsoShapePrototype() {
   // initial setup
   useEffect(() => {
     const mount = mountRef.current;
-
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#0a0a0a');
     sceneRef.current = scene;
-
     const aspect = CANVAS_W / CANVAS_H;
-    const camera = new THREE.OrthographicCamera(
-      -FRUSTUM_D * aspect, FRUSTUM_D * aspect, FRUSTUM_D, -FRUSTUM_D, 0.1, 100
-    );
+    const camera = new THREE.OrthographicCamera(-FRUSTUM_D * aspect, FRUSTUM_D * aspect, FRUSTUM_D, -FRUSTUM_D, 0.1, 100);
     camera.position.set(3, 3, 3);
     camera.lookAt(0, 0.5, 0);
     camera.updateMatrixWorld();
     cameraRef.current = camera;
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
     renderer.setSize(CANVAS_W * PIXEL_SCALE, CANVAS_H * PIXEL_SCALE); // native, 1:1
     mount.appendChild(renderer.domElement);
-
     rebuildMesh(SHAPES[shapeKey], value, lightKey);
-
     const animate = () => {
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     };
     animate();
-
     updateOverlay(SHAPES[shapeKey], value);
-
     return () => {
       mount.removeChild(renderer.domElement);
       geometryRef.current?.dispose();
@@ -379,7 +460,9 @@ export default function IsoShapePrototype() {
   useEffect(() => {
     if (materialRef.current) {
       const u = shape.getUniforms(value);
-      Object.entries(u).forEach(([key, { value: v }]) => {
+      Object.entries(u).forEach(([key, {
+        value: v
+      }]) => {
         if (materialRef.current.uniforms[key]) {
           materialRef.current.uniforms[key].value = v;
         }
@@ -400,70 +483,61 @@ export default function IsoShapePrototype() {
       materialRef.current.uniforms.uLightDir.value.set(...LIGHT_PRESETS[lightKey].dir);
     }
   }, [lightKey]);
-
   const exportSVG = () => {
-    const isoRad = (ISO_DEG * Math.PI) / 180;
-    const cosI = Math.cos(isoRad), sinI = Math.sin(isoRad);
+    const isoRad = ISO_DEG * Math.PI / 180;
+    const cosI = Math.cos(isoRad),
+      sinI = Math.sin(isoRad);
     const SCALE = 110;
-
     const project = ([x, y, z]) => {
       const sx = (x - z) * cosI;
       const sy = y + (x + z) * sinI;
       return [sx * SCALE, -sy * SCALE];
     };
-
     const points = shape.getPoints(value);
     const projected = {};
     for (const k in points) projected[k] = project(points[k]);
-
     const [lx, ly, lz] = LIGHT_PRESETS[lightKey].dir;
     const mag = Math.sqrt(lx * lx + ly * ly + lz * lz);
     const Ldir = [lx / mag, ly / mag, lz / mag];
-    const faceShade = (normal) => {
+    const faceShade = normal => {
       const nm = Math.sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2);
-      const n = normal.map((v) => v / nm);
+      const n = normal.map(v => v / nm);
       const dot = n[0] * Ldir[0] + n[1] * Ldir[1] + n[2] * Ldir[2];
       const diff = Math.max(dot, 0);
       const g = Math.round((AMBIENT + DIFFUSE * diff) * 255);
       return `rgb(${g},${g},${g})`;
     };
-
     const faces = shape.getFaces(value);
-    const allPts = faces.flatMap((f) => f.labels.map((l) => projected[l]));
-    const xs = allPts.map((p) => p[0]);
-    const ys = allPts.map((p) => p[1]);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const allPts = faces.flatMap(f => f.labels.map(l => projected[l]));
+    const xs = allPts.map(p => p[0]);
+    const ys = allPts.map(p => p[1]);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs);
+    const minY = Math.min(...ys),
+      maxY = Math.max(...ys);
     const pad = 10;
     const w = maxX - minX + pad * 2;
     const h = maxY - minY + pad * 2;
     const offX = -minX + pad;
     const offY = -minY + pad;
-
-    const polys = faces
-      .map((f) => {
-        const pts = f.labels
-          .map((l) => projected[l])
-          .map(([x, y]) => `${(x + offX).toFixed(2)},${(y + offY).toFixed(2)}`)
-          .join(' ');
-        return `<polygon points="${pts}" fill="${faceShade(f.normal)}" />`;
-      })
-      .join('\n  ');
-
+    const polys = faces.map(f => {
+      const pts = f.labels.map(l => projected[l]).map(([x, y]) => `${(x + offX).toFixed(2)},${(y + offY).toFixed(2)}`).join(' ');
+      return `<polygon points="${pts}" fill="${faceShade(f.normal)}" />`;
+    }).join('\n  ');
     const grad = GRADIENTS[gradientIndex];
     const gradientDef = `<linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
     <stop offset="0" stop-color="${grad.from}" />
     <stop offset="1" stop-color="${grad.to}" />
   </linearGradient>`;
     const overlayRectSvg = `<rect x="0" y="0" width="${w.toFixed(2)}" height="${h.toFixed(2)}" fill="url(#g)" style="mix-blend-mode:multiply" />`;
-
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w.toFixed(2)}" height="${h.toFixed(2)}" viewBox="0 0 ${w.toFixed(2)} ${h.toFixed(2)}">
   <defs>${gradientDef}</defs>
   ${polys}
   ${overlayRectSvg}
 </svg>`;
-
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const blob = new Blob([svg], {
+      type: 'image/svg+xml'
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -471,98 +545,80 @@ export default function IsoShapePrototype() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
   const grad = GRADIENTS[gradientIndex];
-
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 gap-4">
-      <div
-        className="relative border border-dotted border-gray-500/60"
-        style={{ width: CANVAS_W * PIXEL_SCALE, height: CANVAS_H * PIXEL_SCALE }}
-      >
-        <div ref={mountRef} className="absolute inset-0" />
-        <div
-          style={{
-            position: 'absolute',
-            left: overlayRect.left,
-            top: overlayRect.top,
-            width: overlayRect.width,
-            height: overlayRect.height,
-            background: `linear-gradient(to right, ${grad.from}, ${grad.to})`,
-            mixBlendMode: 'multiply',
-            pointerEvents: 'none',
-          }}
-        />
-      </div>
-
-      <div className="w-full max-w-md flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex justify-between text-sm font-mono">
-            <span>Value</span>
-            <span>{value}</span>
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={127}
-            value={value}
-            onChange={(e) => setValue(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-sm font-mono">Shape</label>
-            <select
-              value={shapeKey}
-              onChange={(e) => setShapeKey(e.target.value)}
-              className="bg-zinc-800 text-white rounded px-2 py-1 text-sm"
-            >
-              {Object.entries(SHAPES).map(([key, s]) => (
-                <option key={key} value={key}>{s.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-sm font-mono">Light</label>
-            <select
-              value={lightKey}
-              onChange={(e) => setLightKey(e.target.value)}
-              className="bg-zinc-800 text-white rounded px-2 py-1 text-sm"
-            >
-              {Object.entries(LIGHT_PRESETS).map(([key, p]) => (
-                <option key={key} value={key}>{p.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            <label className="text-sm font-mono">Gradient</label>
-            <select
-              value={gradientIndex}
-              onChange={(e) => setGradientIndex(Number(e.target.value))}
-              className="bg-zinc-800 text-white rounded px-2 py-1 text-sm"
-            >
-              {GRADIENTS.map((g, i) => (
-                <option key={i} value={i}>{g.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <button
-          onClick={exportSVG}
-          className="mt-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded text-sm"
-        >
-          Export SVG
-        </button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "w-full h-full flex flex-col items-center justify-center bg-black text-white p-6 gap-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "relative border border-dotted border-gray-500/60",
+    style: {
+      width: CANVAS_W * PIXEL_SCALE,
+      height: CANVAS_H * PIXEL_SCALE
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    ref: mountRef,
+    className: "absolute inset-0"
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: overlayRect.left,
+      top: overlayRect.top,
+      width: overlayRect.width,
+      height: overlayRect.height,
+      background: `linear-gradient(to right, ${grad.from}, ${grad.to})`,
+      mixBlendMode: 'multiply',
+      pointerEvents: 'none'
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "w-full max-w-md flex flex-col gap-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-col gap-1"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between text-sm font-mono"
+  }, /*#__PURE__*/React.createElement("span", null, "Value"), /*#__PURE__*/React.createElement("span", null, value)), /*#__PURE__*/React.createElement("input", {
+    type: "range",
+    min: 0,
+    max: 127,
+    value: value,
+    onChange: e => setValue(Number(e.target.value)),
+    className: "w-full"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-2"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col gap-1"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-mono"
+  }, "Shape"), /*#__PURE__*/React.createElement("select", {
+    value: shapeKey,
+    onChange: e => setShapeKey(e.target.value),
+    className: "bg-zinc-800 text-white rounded px-2 py-1 text-sm"
+  }, Object.entries(SHAPES).map(([key, s]) => /*#__PURE__*/React.createElement("option", {
+    key: key,
+    value: key
+  }, s.label)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col gap-1"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-mono"
+  }, "Light"), /*#__PURE__*/React.createElement("select", {
+    value: lightKey,
+    onChange: e => setLightKey(e.target.value),
+    className: "bg-zinc-800 text-white rounded px-2 py-1 text-sm"
+  }, Object.entries(LIGHT_PRESETS).map(([key, p]) => /*#__PURE__*/React.createElement("option", {
+    key: key,
+    value: key
+  }, p.label)))), /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 flex flex-col gap-1"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "text-sm font-mono"
+  }, "Gradient"), /*#__PURE__*/React.createElement("select", {
+    value: gradientIndex,
+    onChange: e => setGradientIndex(Number(e.target.value)),
+    className: "bg-zinc-800 text-white rounded px-2 py-1 text-sm"
+  }, GRADIENTS.map((g, i) => /*#__PURE__*/React.createElement("option", {
+    key: i,
+    value: i
+  }, g.label))))), /*#__PURE__*/React.createElement("button", {
+    onClick: exportSVG,
+    className: "mt-1 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded text-sm"
+  }, "Export SVG")));
 }
-
-
-createRoot(document.getElementById('root')).render(<IsoShapePrototype />);
-</script>
-</body>
-</html>
+createRoot(document.getElementById('root')).render(/*#__PURE__*/React.createElement(IsoShapePrototype, null));
